@@ -1,0 +1,22 @@
+# Credentials — NEVER commit this
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Generated output
+data/
+*.xlsx
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
