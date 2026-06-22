@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from fetchers.airports import resolve_departure_cities
 
 load_dotenv()
 
@@ -12,7 +13,7 @@ AMADEUS_API_SECRET = os.getenv("AMADEUS_API_SECRET")
 FX_APP_ID          = os.getenv("FX_APP_ID")
 
 DESTINATION        = os.getenv("DESTINATION", "AMS")
-DEPARTURE_CITIES   = os.getenv("DEPARTURE_CITIES", "LON,MAN,EDI,BRS").split(",")
+DEPARTURE_CITIES   = resolve_departure_cities(os.getenv("DEPARTURE_CITIES", "UK"))
 NIGHT_DURATIONS    = [int(n) for n in os.getenv("NIGHT_DURATIONS", "2,3,4").split(",")]
 SEARCH_DAYS_AHEAD  = int(os.getenv("SEARCH_DAYS_AHEAD", "365"))
 OCCUPANCY_ADULTS   = int(os.getenv("OCCUPANCY_ADULTS", "2"))
