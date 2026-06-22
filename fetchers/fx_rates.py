@@ -4,12 +4,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def get_rate_to_gbp(app_id: str, from_currency: str = "GBP") -> float:
+def get_rate_to_gbp(app_id: str | None, from_currency: str = "GBP") -> float:
     """
     Returns the conversion rate FROM from_currency TO GBP.
     If source is already GBP, returns 1.0.
     """
-    if from_currency.upper() == "GBP":
+    if from_currency.upper() == "GBP" or not app_id:
         return 1.0
 
     try:

@@ -14,7 +14,7 @@ FX_APP_ID          = os.getenv("FX_APP_ID")
 DESTINATION        = os.getenv("DESTINATION", "AMS")
 DEPARTURE_CITIES   = os.getenv("DEPARTURE_CITIES", "LON,MAN,EDI,BRS").split(",")
 NIGHT_DURATIONS    = [int(n) for n in os.getenv("NIGHT_DURATIONS", "2,3,4").split(",")]
-SEARCH_DAYS_AHEAD  = int(os.getenv("SEARCH_DAYS_AHEAD", "90"))
+SEARCH_DAYS_AHEAD  = int(os.getenv("SEARCH_DAYS_AHEAD", "365"))
 OCCUPANCY_ADULTS   = int(os.getenv("OCCUPANCY_ADULTS", "2"))
 ALERT_THRESHOLD    = float(os.getenv("ALERT_THRESHOLD_GBP", "200"))
 

@@ -71,7 +71,6 @@ def flight_price_pivot(flights_df: pd.DataFrame, origin: str, night_durations: l
     sub = flights_df[flights_df["origin"] == origin].copy()
     if sub.empty:
         return pd.DataFrame()
-    sub["date_label"] = sub["depart_date"].dt.strftime("%-d-%b")
     pivot = sub.pivot_table(
         index="depart_date",
         columns="nights",

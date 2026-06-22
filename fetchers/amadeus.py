@@ -1,5 +1,6 @@
 import requests
 import logging
+import time
 from datetime import date, timedelta
 
 logger = logging.getLogger(__name__)
@@ -103,6 +104,8 @@ def fetch_all_flights(
 ) -> list[dict]:
     token = _get_token(api_key, api_secret)
     all_results = []
+    call_count = 0
+    total_calls = len(departure_cities) * days_ahead * len(night_durations)
 
     for city in departure_cities:
         for offset in range(days_ahead):
@@ -112,6 +115,15 @@ def fetch_all_flights(
                 fare = fetch_cheapest_fare(token, city, destination, depart, return_d, adults)
                 if fare:
                     all_results.append(fare)
+                call_count += 1
+                # Refresh token every 1500 calls (token expires after ~1800 seconds)
+                if call_count % 1500 == 0:
+                    token = _get_token(api_key, api_secret)
+                    logger.info("Amadeus token refreshed at call %d", call_count)
+                if call_count % 100 == 0:
+                    logger.info("Amadeus progress: %d / %d calls", call_count, total_calls)
+                # Respect free-tier rate limit (~1 req/sec)
+                time.sleep(0.5)
 
-    logger.info("Amadeus: %d flight fares fetched", len(all_results))
+    logger.info("Amadeus: %d flight fares fetched from %d calls", len(all_results), call_count)
     return all_results
