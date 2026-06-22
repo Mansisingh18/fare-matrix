@@ -13,6 +13,23 @@ import logging
 import xml.etree.ElementTree as ET
 from datetime import date, timedelta
 
+WANTED_BOARDS = {"RO", "BB", "HB", "FB", "AI"}
+
+BOARD_BASIS_LABELS = {
+    "RO": "Room Only",
+    "BB": "Bed & Breakfast",
+    "HB": "Half Board",
+    "FB": "Full Board",
+    "AI": "All Inclusive",
+}
+
+def _parse_stars(rating_str: str) -> str:
+    s = str(rating_str).strip()
+    for n in ["7", "6", "5", "4", "3", "2", "1"]:
+        if s.startswith(n):
+            return f"{n}★"
+    return "N/A"
+
 logger = logging.getLogger(__name__)
 
 BASE_URL = "https://xml.acerooms.com/api/hotel/search"
@@ -56,32 +73,37 @@ def _parse_response(xml_text: str, check_in: date, check_out: date) -> list[dict
             hotel_el    = room_stay.find("ota:BasicPropertyInfo", ns)
             hotel_code  = hotel_el.get("HotelCode", "") if hotel_el is not None else ""
             hotel_name  = hotel_el.get("HotelName", "Unknown") if hotel_el is not None else "Unknown"
+            rating_str  = hotel_el.get("HotelRating", "") if hotel_el is not None else ""
+            stars       = _parse_stars(rating_str)
 
             for rate_plan in room_stay.findall(".//ota:RatePlan", ns):
                 total_el = rate_plan.find("ota:Total", ns)
                 if total_el is None:
                     continue
-                price_str   = total_el.get("AmountAfterTax", "0")
-                currency    = total_el.get("CurrencyCode", "GBP")
-                board_code  = rate_plan.get("MealPlanIndicator", "RO")
+                price_str  = total_el.get("AmountAfterTax", "0")
+                currency   = total_el.get("CurrencyCode", "GBP")
+                board_code = rate_plan.get("MealPlanIndicator", "RO").upper()
 
+                if board_code not in WANTED_BOARDS:
+                    continue
                 try:
                     price = float(price_str)
                 except ValueError:
                     continue
-
                 if price == 0:
                     continue
 
                 results.append({
                     "hotel_code":  hotel_code,
                     "hotel_name":  hotel_name,
+                    "stars":       stars,
                     "check_in":    check_in,
                     "check_out":   check_out,
                     "nights":      nights,
                     "price_gbp":   price,
                     "currency":    currency,
                     "board_basis": board_code,
+                    "board_label": BOARD_BASIS_LABELS.get(board_code, board_code),
                     "source":      "Acerooms",
                 })
     except ET.ParseError as e:

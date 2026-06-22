@@ -9,6 +9,26 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://api.hotelbeds.com/hotel-api/1.0"
 
 
+BOARD_BASIS_LABELS = {
+    "RO": "Room Only",
+    "BB": "Bed & Breakfast",
+    "HB": "Half Board",
+    "FB": "Full Board",
+    "AI": "All Inclusive",
+    "SC": "Self Catering",
+}
+
+WANTED_BOARDS = {"RO", "BB", "HB", "FB", "AI"}
+
+
+def _parse_stars(category_code: str) -> str:
+    code = str(category_code).upper().strip()
+    for n in ["7", "6", "5", "4", "3", "2", "1"]:
+        if code.startswith(n):
+            return f"{n}★"
+    return "N/A"
+
+
 def _headers(api_key: str, secret: str) -> dict:
     timestamp = str(int(time.time()))
     raw = f"{api_key}{secret}{timestamp}"
@@ -60,20 +80,26 @@ def fetch_hotels(
     hotels = data.get("hotels", {}).get("hotels", [])
     results = []
     for h in hotels:
+        stars = _parse_stars(h.get("categoryCode", ""))
         for room in h.get("rooms", []):
             for rate in room.get("rates", []):
-                price = float(rate.get("net", 0))
+                price      = float(rate.get("net", 0))
+                board_code = rate.get("boardCode", "RO").upper()
                 if price == 0:
+                    continue
+                if board_code not in WANTED_BOARDS:
                     continue
                 results.append({
                     "hotel_code": h.get("code"),
                     "hotel_name": h.get("name", "Unknown"),
-                    "check_in": check_in,
-                    "check_out": check_out,
-                    "nights": nights,
-                    "price_gbp": price,
-                    "board_basis": rate.get("boardCode", "RO"),
-                    "source": "Bedsonline",
+                    "stars":      stars,
+                    "check_in":   check_in,
+                    "check_out":  check_out,
+                    "nights":     nights,
+                    "price_gbp":  price,
+                    "board_basis": board_code,
+                    "board_label": BOARD_BASIS_LABELS.get(board_code, board_code),
+                    "source":     "Bedsonline",
                 })
 
     logger.info("Bedsonline: %d hotels for %s -> %s (%dN)", len(results), check_in, check_out, nights)

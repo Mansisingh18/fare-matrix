@@ -61,18 +61,22 @@ def run():
     logger.info("Hotels total (both sources): %d rows", len(raw_hotels))
 
     # ── 2. Fetch flight prices ───────────────────────────────────────────────
-    logger.info("Fetching flight prices from Amadeus...")
-    raw_flights = fetch_all_flights(
-        api_key=config.AMADEUS_API_KEY,
-        api_secret=config.AMADEUS_API_SECRET,
-        departure_cities=config.DEPARTURE_CITIES,
-        destination=config.DESTINATION,
-        start_date=start_date,
-        days_ahead=config.SEARCH_DAYS_AHEAD,
-        night_durations=config.NIGHT_DURATIONS,
-        adults=config.OCCUPANCY_ADULTS,
-    )
-    logger.info("Flights fetched: %d rows", len(raw_flights))
+    raw_flights = []
+    if config.AMADEUS_API_KEY and config.AMADEUS_API_SECRET:
+        logger.info("Fetching flight prices from Amadeus...")
+        raw_flights = fetch_all_flights(
+            api_key=config.AMADEUS_API_KEY,
+            api_secret=config.AMADEUS_API_SECRET,
+            departure_cities=config.DEPARTURE_CITIES,
+            destination=config.DESTINATION,
+            start_date=start_date,
+            days_ahead=config.SEARCH_DAYS_AHEAD,
+            night_durations=config.NIGHT_DURATIONS,
+            adults=config.OCCUPANCY_ADULTS,
+        )
+        logger.info("Flights fetched: %d rows", len(raw_flights))
+    else:
+        logger.info("Amadeus not configured — skipping flights, running hotels only")
 
     # ── 3. Currency conversion (prices are already in GBP from both APIs) ───
     # If Bedsonline ever returns EUR prices, apply conversion here:
@@ -85,7 +89,7 @@ def run():
 
     if hotels_df.empty:
         logger.warning("No hotel data — check Bedsonline credentials and destination code")
-    if flights_df.empty:
+    if flights_df.empty and raw_flights:
         logger.warning("No flight data — check Amadeus credentials and route codes")
 
     # ── 5. Build packages (hotel + flight joined) ────────────────────────────
